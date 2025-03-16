@@ -1,0 +1,1 @@
+export const suits = ['hearts', 'diamonds', 'spades', 'clubs'];
