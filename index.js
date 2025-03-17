@@ -1,20 +1,26 @@
 import deck from './modules/cards.js'
 import Combinations from './modules/combinations.js'
 import Game from './modules/game.js'
+import Card from './modules/card.js';
 
 console.log(deck.Cards52);
 
 const hand = [
-    { value: 2, suit: 'clubs', name: '2 of clubs' }, 
-    { value: 11, suit: 'spades', name: '4 of spades' }, 
+    new Card(2, 'spades'),
+    new Card(5, 'diamonds'),
 ];
 
 const table = [
-    { value: 6, suit: 'clubs', name: '6 of clubs' },
-    { value: 6, suit: 'diamonds', name: '6 of clubs' },
-    { value: 14, suit: 'spades', name: '2 of spades' },
-    { value: 11, suit: 'diamonds', name: 'Jack of diamonds' },
-    { value: 14, suit: 'diamonds', name: 'Ace of diamonds' }
+    new Card(10, 'clubs'),
+    new Card(7, 'clubs'),
+    new Card(8, 'clubs'),
+    new Card(9, 'diamonds'),
+    new Card(11, 'diamonds'),
 ];
 
 console.log(Game.check_combination(hand, table));
+
+const a = deck.Cards36[10];
+const b = deck.Cards36[10];
+
+console.log(a.areEqual(b));
