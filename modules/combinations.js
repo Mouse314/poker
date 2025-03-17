@@ -17,68 +17,47 @@ const Combinations = {
     Two_Pair : (hand, table) => {
         let common = [...hand, ...table];
         common = common.sort((a, b) => a.value - b.value);
-        let hands_involves = [];
         let pair_count = 0;
         let pairs = [];
         for (let i = 1; i < common.length; i++) {
             if (common[i].value === common[i - 1].value) {
                 pair_count++;
                 pairs.push(common[i]);
-                if (hand[0].areEqual(common[i - 1])) hands_involves.push(hand[0]);
-                if (hand[0].areEqual(common[i])) hands_involves.push(hand[0]);
-                if (hand[1].areEqual(common[i - 1])) hands_involves.push(hand[1]);
-                if (hand[1].areEqual(common[i])) hands_involves.push(hand[1]);
                 i++;
             }
         }
+
+        if (pairs.length < 2) return null;
+
         pairs = pairs.sort((a, b) => b.value - a.value);
-        if (pair_count < 2) return null;
-        if (hands_involves.length == 0) return null;
-        if (hands_involves.length == 1) 
-            return [pairs[0].value, pairs[1].value, (hand[0].value == hands_involves[0].value) ? hand[1].value : hand[0].value];
-        if (hands_involves.length == 2) 
-            return [pairs[0].value, pairs[1].value, pairs[1].value];
-        return null
+        hand = hand.sort((a, b) => a.value - b.value);
+        
+        return [pairs[0].value, pairs[1].value, hand[1].value];
     },
 
     Three_of_a_Kind : (hand, table) => {
         let common = [...hand, ...table];
         common = common.sort((a, b) => a.value - b.value);
-        let hands_involves = [];
-        let set_card = {};
+        let set_card = null;
         for (let i = 2; i < common.length; i++) {
             if (common[i - 2].value == common[i - 1].value && common[i - 1].value == common[i].value) {
                 set_card = common[i - 1];
-
-                if (hand[0].areEqual(common[i - 2])) hands_involves.push(hand[0]);
-                if (hand[0].areEqual(common[i - 1])) hands_involves.push(hand[0]);
-                if (hand[0].areEqual(common[i])) hands_involves.push(hand[0]);
-
-                if (hand[1].areEqual(common[i - 2])) hands_involves.push(hand[1]);
-                if (hand[1].areEqual(common[i - 1])) hands_involves.push(hand[1]);
-                if (hand[1].areEqual(common[i])) hands_involves.push(hand[1]);
 
                 break;
             }
         }
 
-        if (hands_involves.length === 0) return null;
-        if (hands_involves.length === 1) {
-            if (hands_involves[0].value === hand[0].value) return [set_card.value, hand[1].value];
-            if (hands_involves[0].value === hand[1].value) return [set_card.value, hand[0].value];
-        }
-        if (hands_involves.length === 2) {
-            return [set_card.value, hand[1].value];
-        }
+        if (set_card === null) return null;
 
-        return null;
+        hand = hand.sort((a, b) => a.value - b.value);
+
+        return [set_card.value, hand[1].value, hand[0].value];
     },
 
     Straight : (hand, table) => {
         let common = [...hand, ...table];
         common = common.sort((a, b) => b.value - a.value);
         let straight_top;
-        let hand_involved = [];
         for (let i = 4; i < common.length; i++) {
             if (common[i - 3].value === common[i - 4].value - 1 && 
                 common[i - 2].value === common[i - 3].value - 1 && 
@@ -87,54 +66,136 @@ const Combinations = {
             ) {
                 straight_top = common[i - 4];
 
-                for (let j = i - 4; j <= i; j++) {
-                    if (hand[0].areEqual(common[j])) hand_involved.push(common[j]);
-                    if (hand[1].areEqual(common[j])) hand_involved.push(common[j]);
-                }
+                break;
+            }
+        }
 
-                if (hand_involved.length === 0) continue;
+        return straight_top.value;
+    },
+
+    Flush : (hand, table) => {
+        let common = [...hand, ...table];
+        common = common.sort((a, b) => a.suit.localeCompare(b.suit) || a.value - b.value);
+
+        let flush_cards = [];
+
+        for (let i = 4; i < common.length; i++) {
+            if (common[i - 3].suit === common[i - 4].suit && 
+                common[i - 2].suit === common[i - 3].suit && 
+                common[i - 1].suit === common[i - 2].suit && 
+                common[i].suit === common[i - 1].suit
+            ) {
+                flush_cards = [common[i - 4], common[i - 3], common[i - 2], common[i - 1], common[i]].reverse();
+
+                break;
+            }
+        }
+        if (flush_cards.length === 0) return null;
+        return flush_cards.map(card => card.value);
+    },
+
+    Full_House : (hand, table) => {
+        let common = [...hand, ...table];
+        common = common.sort((a, b) => b.value - a.value);
+
+        let pair = null, set = null;
+
+        let set_start = -1;
+
+        for (let i = 2; i < common.length; i++) {
+            if (common[i - 2].value === common[i - 1].value && common[i - 1].value === common[i].value) {
+                set = common[i - 2];
+                set_start = i - 2;
+                break;
+            }
+        }
+
+        if (set_start == -1) return null;
+        else common.splice(set_start, 3);
+
+        for (let i = 1; i < common.length; i++) {
+            if (common[i - 1].value === common[i].value) {
+                pair = common[i - 1];
+                break;
+            }
+        }
+
+        if (pair === null) return null;
+        else return [set.value, pair.value];
+    },
+
+    Four_of_a_Kind : (hand, table) => {
+        let common = [...hand, ...table];
+        common = common.sort((a, b) => b.value - a.value);
+
+        let kare_start = -1;
+        let kare;
+
+        for (let i = 3; i < common.length; i++) {
+            if (common[i - 3].value === common[i - 2].value &&
+                common[i - 2].value === common[i - 1].value &&
+                common[i - 1].value === common[i - 0].value
+            ) {
+                kare = common[i - 3];
+                kare_start = i - 3;
+            }
+        }
+
+        if (kare_start === -1) return null;
+        else {
+            common.splice(kare_start, 4);
+            return [kare.value, common[0].value];
+        }
+    },
+
+    Straight_Flush : (hand, table) => {
+        let common = [...hand, ...table];
+        common = common.sort((a, b) => b.value - a.value);
+        let straight_flush_top = null;
+        for (let i = 4; i < common.length; i++) {
+            if ((common[i - 3].value === common[i - 4].value - 1 && 
+                common[i - 2].value === common[i - 3].value - 1 && 
+                common[i - 1].value === common[i - 2].value - 1 && 
+                common[i].value === common[i - 1].value - 1) && 
+                (common[i - 3].suit === common[i - 4].suit && 
+                common[i - 2].suit === common[i - 3].suit && 
+                common[i - 1].suit === common[i - 2].suit && 
+                common[i].suit === common[i - 1].suit)
+            ) {
+                straight_flush_top = common[i - 4];
 
                 break;
             }
         }
 
-        hand_involved = hand_involved.sort((a, b) => b.value - a.value);
-
-        if (hand_involved.length == 0) return null;
-        if (hand_involved.length == 1) {
-            if (hand_involved[0].value === hand[0].value) return [straight_top.value, hand[0].value, hand[1].value];
-            if (hand_involved[0].value === hand[1].value) return [straight_top.value, hand[1].value, hand[0].value];
-        }
-        if (hand_involved.length == 2) {
-            return [straight_top.value, hand_involved[0].value, hand_involved[1].value];
-        }
-
-        return null;
-    },
-
-    Flush : (hand, table) => {
-        
-        return null;
-    },
-
-    Full_House : (hand, table) => {
-        
-        return null;
-    },
-
-    Four_of_a_Kind : (hand, table) => {
-        
-        return null;
-    },
-
-    Straight_Flush : (hand, table) => {
-        
-        return null;
+        if (straight_flush_top === null) return null;
+        return straight_flush_top.value;
     },
 
     Royal_Flush : (hand, table) => {
         
-        return null;
+        let common = [...hand, ...table];
+        common = common.sort((a, b) => b.value - a.value);
+        let royal_flush_top = null;
+        for (let i = 4; i < common.length; i++) {
+            if ((common[i - 3].value === common[i - 4].value - 1 && 
+                common[i - 2].value === common[i - 3].value - 1 && 
+                common[i - 1].value === common[i - 2].value - 1 && 
+                common[i].value === common[i - 1].value - 1) && 
+                (common[i - 3].suit === common[i - 4].suit && 
+                common[i - 2].suit === common[i - 3].suit && 
+                common[i - 1].suit === common[i - 2].suit && 
+                common[i].suit === common[i - 1].suit) &&
+                (common[i - 3].value === 14)
+            ) {
+                royal_flush_top = common[i - 4];
+
+                break;
+            }
+        }
+
+        if (royal_flush_top === null) return null;
+        return royal_flush_top.value;
     }
 }
 

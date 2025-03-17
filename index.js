@@ -24,3 +24,7 @@ const a = deck.Cards36[10];
 const b = deck.Cards36[10];
 
 console.log(a.areEqual(b));
+
+console.log(table.sort((a, b) => a.suit.localeCompare(b.suit) || a.value - b.value));
+
+console.log(Game.combine_all_sets(deck.Cards52.filter((e, i) => i < 45)).length);
